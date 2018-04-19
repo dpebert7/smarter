@@ -1,0 +1,30 @@
+Database Details:
+
+STUDENTS:
+ - ID
+ - Enrolled
+ - Name
+ - Grade
+ - Homeroom
+ - Other personal details
+
+
+TEACHERS:
+ - ID
+ - Personal details
+
+CLASS:
+ - ID
+ - Teacher ID
+ - Student ID's
+ - 
+
+
+
+
+GRADEBOOK REQUIREMENTS
+ - Fields for Teacher name, class description, term, etc
+ - Student ID
+ - Grade
+ - Comment
+ - 

@@ -1,0 +1,92 @@
+---
+title: "Test"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+packages <- c("flexdashboard", "readr", "dplyr", "rhandsontable", "shiny", "datasets")
+for (p in packages) {
+  library(p, character.only = TRUE, quietly = TRUE)
+}
+data(faithful)
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+### Input and Control
+```{r input_panel}
+# Input file
+fileInput(inputId = "file_property_input", label = "Upload Properties")
+radioButtons("useType", "Use Data Types", c("TRUE", "FALSE"))
+actionButton("save", " Save Grades ", icon("save"))
+```
+
+Row 
+-----------------------------------------------------------------------
+### Properties
+```{r property_table}
+# Load input data file
+values <- reactiveValues(hot = NULL)
+
+sum_percentage <- reactive({
+  return(sum(values[["hot"]]$Vol_Percent))
+})
+
+df_input <- reactive({
+  validate(need(input$file_property_input, message = FALSE))
+  input_file <- input$file_property_input
+  return(read_csv(input_file$datapath))
+})
+
+output$hot <- renderRHandsontable({
+  data <- NULL
+  if (is.null(values[["hot"]])) {
+    values[["hot"]] <- cbind(Vol_Percent = rep(0, nrow(df_input())), data.frame(df_input()))
+  }
+  if (!is.null(input$hot)) {
+    data <- hot_to_r(input$hot)
+    values[["hot"]] <- data
+  } else if (!is.null(values[["hot"]])) {
+    data <- values[["hot"]]
+  }
+  if (!is.null(data)) {
+    rhandsontable(data, search = TRUE, readOnly = TRUE, height = 400) %>%
+    hot_col("Vol_Percent", readOnly = FALSE) %>%
+    hot_cols(fixedColumnsLeft = 1) %>%
+    hot_context_menu(allowRowEdit = FALSE, allowColEdit = FALSE, 
+    customOpts = list(
+      search = list(name = "Search",
+                    callback = htmlwidgets::JS(
+                      "function (key, options) {
+                         var srch = prompt('Search criteria');
+                         this.search.query(srch);
+                         this.render();
+                       }"))))
+  }
+})
+
+rHandsontableOutput("hot")
+
+```
+
+Row 
+-----------------------------------------------------------------------
+### Input Validility
+```{r input_valid}
+renderValueBox({
+  info <- "Input Validated"
+  valueBox(value = info, icon = ifelse(info == "Input Validated", "fa-check", "fa-times"), color = ifelse(info == "Input Validated", "success", "danger"))
+})
+```
+
+### Total Percentage
+```{r information}
+renderValueBox({
+  rate <- ifelse(!is.null(sum_percentage()), sum_percentage(), 0)
+  valueBox(value = rate, icon = ifelse(rate == 100, "fa-check", "fa-times"), color = ifelse(rate == 100, "success", "warning"))
+})
+```
